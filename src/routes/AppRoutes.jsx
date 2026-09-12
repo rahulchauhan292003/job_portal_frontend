@@ -21,6 +21,7 @@ import Users from "../pages/admin/Users";
 import Recruiters from "../pages/admin/Recruiters";
 import RecruiterDetails from "../pages/admin/RecruiterDetails";
 import RecruiterJobApplications from "../pages/admin/RecruiterJobApplications";
+import AdminJobs from "../pages/admin/Jobs";
 
 // Protected Route
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -92,6 +93,15 @@ const AppRoutes = () => {
         }
       />
 
+      <Route
+        path="/recruiter/jobs/:jobId/edit"
+        element={
+          <ProtectedRoute allowedRoles={["recruiter"]}>
+            <CreateJob />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Same JobDetails component for recruiter/admin */}
       <Route
         path="/recruiter/jobs/:jobId"
@@ -127,6 +137,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <Users />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/jobs"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminJobs />
           </ProtectedRoute>
         }
       />

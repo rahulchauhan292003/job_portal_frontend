@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 import api from "../../services/api";
@@ -16,14 +16,19 @@ const QUESTION_TYPES = [
 
 const CreateJob = () => {
   const navigate = useNavigate();
+  const { jobId } = useParams();
+
+  const isEditMode = Boolean(jobId);
 
   const [submitting, setSubmitting] = useState(false);
+  const [loadingJob, setLoadingJob] = useState(isEditMode);
 
   const {
     register,
     control,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -42,6 +47,44 @@ const CreateJob = () => {
 
   const questions = watch("questions");
 
+  // Load job for edit
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const fetchJob = async () => {
+      try {
+        setLoadingJob(true);
+
+        const response = await api.get(`/jobs/${jobId}`);
+
+        const job = response.data.data;
+
+        reset({
+          title: job.title || "",
+          company: job.company || "",
+          location: job.location || "",
+          description: job.description || "",
+          questions: (job.questions || []).map((question) => ({
+            questionId: question.questionId,
+            label: question.label || "",
+            type: question.type || "text",
+            required: Boolean(question.required),
+            options: (question.options || []).join(", "),
+          })),
+        });
+      } catch (error) {
+        const message = error.response?.data?.message || "Failed to load job";
+
+        toast.error(message);
+        navigate("/recruiter/dashboard");
+      } finally {
+        setLoadingJob(false);
+      }
+    };
+
+    fetchJob();
+  }, [jobId, isEditMode, reset, navigate]);
+
   const onSubmit = async (formData) => {
     try {
       setSubmitting(true);
@@ -53,6 +96,8 @@ const CreateJob = () => {
         description: formData.description.trim(),
 
         questions: (formData.questions || []).map((question) => ({
+          ...(question.questionId ? { questionId: question.questionId } : {}),
+
           label: question.label.trim(),
           type: question.type,
           required: Boolean(question.required),
@@ -67,13 +112,21 @@ const CreateJob = () => {
         })),
       };
 
-      await api.post("/jobs", payload);
+      if (isEditMode) {
+        await api.patch(`/jobs/${jobId}`, payload);
 
-      toast.success("Job created successfully");
+        toast.success("Job updated successfully");
+      } else {
+        await api.post("/jobs", payload);
+
+        toast.success("Job created successfully");
+      }
 
       navigate("/recruiter/dashboard");
     } catch (error) {
-      const message = error.response?.data?.message || "Failed to create job";
+      const message =
+        error.response?.data?.message ||
+        (isEditMode ? "Failed to update job" : "Failed to create job");
 
       toast.error(message);
     } finally {
@@ -90,26 +143,38 @@ const CreateJob = () => {
     });
   };
 
+  if (loadingJob) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-500">Loading job...</p>
+      </main>
+    );
+  }
+
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10">
+    <main className="mx-auto max-w-4xl px-4 py-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Create Job</h1>
+        <h1 className="text-3xl font-bold">
+          {isEditMode ? "Edit Job" : "Create Job"}
+        </h1>
 
-        <p className="text-gray-500 mt-2">
-          Create a job and define its application questions.
+        <p className="mt-2 text-gray-500">
+          {isEditMode
+            ? "Update job details and application questions."
+            : "Create a job and define its application questions."}
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* Job Information */}
-        <section className="border rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-6">Job Information</h2>
+        <section className="rounded-xl border p-6">
+          <h2 className="mb-6 text-xl font-semibold">Job Information</h2>
 
           <div className="space-y-5">
             {/* Job Title */}
             <div>
-              <label className="block font-medium mb-2">Job Title *</label>
+              <label className="mb-2 block font-medium">Job Title *</label>
 
               <input
                 type="text"
@@ -119,11 +184,11 @@ const CreateJob = () => {
                     value.trim().length > 0 || "Job title is required",
                 })}
                 placeholder="e.g. Node.js Developer"
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2"
+                className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
               />
 
               {errors.title && (
-                <p className="text-sm text-red-500 mt-1">
+                <p className="mt-1 text-sm text-red-500">
                   {errors.title.message}
                 </p>
               )}
@@ -131,7 +196,7 @@ const CreateJob = () => {
 
             {/* Company */}
             <div>
-              <label className="block font-medium mb-2">Company *</label>
+              <label className="mb-2 block font-medium">Company *</label>
 
               <input
                 type="text"
@@ -141,11 +206,11 @@ const CreateJob = () => {
                     value.trim().length > 0 || "Company is required",
                 })}
                 placeholder="e.g. ABC Technologies"
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2"
+                className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
               />
 
               {errors.company && (
-                <p className="text-sm text-red-500 mt-1">
+                <p className="mt-1 text-sm text-red-500">
                   {errors.company.message}
                 </p>
               )}
@@ -153,7 +218,7 @@ const CreateJob = () => {
 
             {/* Location */}
             <div>
-              <label className="block font-medium mb-2">Location *</label>
+              <label className="mb-2 block font-medium">Location *</label>
 
               <input
                 type="text"
@@ -163,11 +228,11 @@ const CreateJob = () => {
                     value.trim().length > 0 || "Location is required",
                 })}
                 placeholder="e.g. Mohali / Remote"
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2"
+                className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
               />
 
               {errors.location && (
-                <p className="text-sm text-red-500 mt-1">
+                <p className="mt-1 text-sm text-red-500">
                   {errors.location.message}
                 </p>
               )}
@@ -175,7 +240,7 @@ const CreateJob = () => {
 
             {/* Description */}
             <div>
-              <label className="block font-medium mb-2">Description *</label>
+              <label className="mb-2 block font-medium">Description *</label>
 
               <textarea
                 rows={6}
@@ -185,11 +250,11 @@ const CreateJob = () => {
                     value.trim().length > 0 || "Description is required",
                 })}
                 placeholder="Describe the role..."
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2"
+                className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
               />
 
               {errors.description && (
-                <p className="text-sm text-red-500 mt-1">
+                <p className="mt-1 text-sm text-red-500">
                   {errors.description.message}
                 </p>
               )}
@@ -198,12 +263,12 @@ const CreateJob = () => {
         </section>
 
         {/* Application Questions */}
-        <section className="border rounded-xl p-6 mt-8">
-          <div className="flex items-center justify-between mb-6">
+        <section className="mt-8 rounded-xl border p-6">
+          <div className="mb-6 flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Application Questions</h2>
 
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="mt-1 text-sm text-gray-500">
                 Add the questions applicants need to answer.
               </p>
             </div>
@@ -211,7 +276,7 @@ const CreateJob = () => {
             <button
               type="button"
               onClick={addQuestion}
-              className="border px-4 py-2 rounded-lg hover:bg-gray-50"
+              className="rounded-lg border px-4 py-2 hover:bg-gray-50"
             >
               + Add Question
             </button>
@@ -219,7 +284,7 @@ const CreateJob = () => {
 
           {/* Empty State */}
           {fields.length === 0 && (
-            <div className="border border-dashed rounded-xl p-8 text-center">
+            <div className="rounded-xl border border-dashed p-8 text-center">
               <p className="text-gray-500">No application questions added.</p>
 
               <button
@@ -232,6 +297,7 @@ const CreateJob = () => {
             </div>
           )}
 
+          {/* Questions */}
           <div className="space-y-6">
             {fields.map((field, index) => {
               const questionType = questions?.[index]?.type;
@@ -240,15 +306,15 @@ const CreateJob = () => {
                 questionType === "dropdown" || questionType === "checkbox";
 
               return (
-                <div key={field.id} className="border rounded-xl p-5">
+                <div key={field.id} className="rounded-xl border p-5">
                   {/* Question Header */}
-                  <div className="flex items-center justify-between mb-5">
+                  <div className="mb-5 flex items-center justify-between">
                     <h3 className="font-semibold">Question {index + 1}</h3>
 
                     <button
                       type="button"
                       onClick={() => remove(index)}
-                      className="text-red-500 text-sm"
+                      className="text-sm text-red-500"
                     >
                       Remove
                     </button>
@@ -257,7 +323,7 @@ const CreateJob = () => {
                   <div className="space-y-4">
                     {/* Question Label */}
                     <div>
-                      <label className="block font-medium mb-2">
+                      <label className="mb-2 block font-medium">
                         Question *
                       </label>
 
@@ -271,11 +337,11 @@ const CreateJob = () => {
                             "Question label is required",
                         })}
                         placeholder="e.g. Years of experience"
-                        className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2"
+                        className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
                       />
 
                       {errors.questions?.[index]?.label && (
-                        <p className="text-sm text-red-500 mt-1">
+                        <p className="mt-1 text-sm text-red-500">
                           {errors.questions[index].label.message}
                         </p>
                       )}
@@ -283,13 +349,13 @@ const CreateJob = () => {
 
                     {/* Question Type */}
                     <div>
-                      <label className="block font-medium mb-2">
+                      <label className="mb-2 block font-medium">
                         Question Type *
                       </label>
 
                       <select
                         {...register(`questions.${index}.type`)}
-                        className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2"
+                        className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
                       >
                         {QUESTION_TYPES.map((type) => (
                           <option key={type} value={type}>
@@ -300,11 +366,11 @@ const CreateJob = () => {
                     </div>
 
                     {/* Required */}
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex cursor-pointer items-center gap-2">
                       <input
                         type="checkbox"
                         {...register(`questions.${index}.required`)}
-                        className="w-4 h-4"
+                        className="h-4 w-4"
                       />
 
                       <span>Required question</span>
@@ -313,7 +379,7 @@ const CreateJob = () => {
                     {/* Options */}
                     {requiresOptions && (
                       <div>
-                        <label className="block font-medium mb-2">
+                        <label className="mb-2 block font-medium">
                           Options *
                         </label>
 
@@ -337,15 +403,15 @@ const CreateJob = () => {
                             },
                           })}
                           placeholder="Remote, Hybrid, On-site"
-                          className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2"
+                          className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
                         />
 
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="mt-1 text-xs text-gray-500">
                           Enter options separated by commas.
                         </p>
 
                         {errors.questions?.[index]?.options && (
-                          <p className="text-sm text-red-500 mt-1">
+                          <p className="mt-1 text-sm text-red-500">
                             {errors.questions[index].options.message}
                           </p>
                         )}
@@ -359,12 +425,12 @@ const CreateJob = () => {
         </section>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 mt-8">
+        <div className="mt-8 flex justify-end gap-3">
           <button
             type="button"
             onClick={() => navigate("/recruiter/dashboard")}
             disabled={submitting}
-            className="border px-5 py-3 rounded-lg disabled:opacity-50"
+            className="rounded-lg border px-5 py-3 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -372,9 +438,15 @@ const CreateJob = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="bg-black text-white px-6 py-3 rounded-lg disabled:opacity-50"
+            className="rounded-lg bg-black px-6 py-3 text-white disabled:opacity-50"
           >
-            {submitting ? "Creating..." : "Create Job"}
+            {submitting
+              ? isEditMode
+                ? "Updating..."
+                : "Creating..."
+              : isEditMode
+                ? "Update Job"
+                : "Create Job"}
           </button>
         </div>
       </form>

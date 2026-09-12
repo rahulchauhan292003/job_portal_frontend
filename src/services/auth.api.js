@@ -48,3 +48,12 @@ export const getRecruiterDetails = async (recruiterId) => {
 
   return response.data;
 };
+
+export const createRecruiter = async (recruiterData) => {
+  const response = await api.post(
+    "/auth/recruiters",
+    recruiterData
+  );
+
+  return response.data;
+};

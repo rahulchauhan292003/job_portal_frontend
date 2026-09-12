@@ -34,13 +34,16 @@ const AdminDashboard = () => {
           </p>
         </Link>
 
-        <div className="border rounded-xl p-6">
-          <h2 className="text-xl font-semibold">Platform</h2>
+        <Link
+          to="/admin/jobs"
+          className="block border rounded-xl p-6 hover:shadow-md transition"
+        >
+          <h2 className="text-xl font-semibold">Job Management</h2>
 
           <p className="text-gray-500 mt-2">
-            Manage overall job application activity.
+            View, search and manage all jobs on the platform.
           </p>
-        </div>
+        </Link>
       </div>
     </main>
   );
