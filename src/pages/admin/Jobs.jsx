@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
+import JobCard from "../../components/JobCard";
+
 import { getAdminJobs, updateAdminJobStatus } from "../../services/job.api";
 
 const AdminJobs = () => {
@@ -71,18 +73,6 @@ const AdminJobs = () => {
     }
   };
 
-  const getStatusClass = (jobStatus) => {
-    if (jobStatus === "active") {
-      return "bg-green-100 text-green-700";
-    }
-
-    if (jobStatus === "closed") {
-      return "bg-yellow-100 text-yellow-700";
-    }
-
-    return "bg-red-100 text-red-700";
-  };
-
   return (
     <main className="max-w-7xl mx-auto px-4 py-10">
       {/* Header */}
@@ -95,7 +85,7 @@ const AdminJobs = () => {
       </div>
 
       {/* Filters */}
-      <div className="border rounded-xl p-5 mb-8">
+      <div className="border border-gray-200 rounded-xl p-5 mb-8 bg-white">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
           <div className="md:col-span-2">
@@ -108,7 +98,7 @@ const AdminJobs = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by title, company or location"
-              className="w-full border rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-black"
+              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-gray-200"
             />
           </div>
 
@@ -119,7 +109,7 @@ const AdminJobs = () => {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full border rounded-lg px-4 py-2.5 bg-white outline-none focus:ring-2 focus:ring-black"
+              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 bg-white outline-none focus:ring-2 focus:ring-gray-200"
             >
               <option value="">All Status</option>
               <option value="active">Active</option>
@@ -134,8 +124,7 @@ const AdminJobs = () => {
       {loading ? (
         <div className="py-10 text-center text-gray-500">Loading jobs...</div>
       ) : jobs.length === 0 ? (
-        /* Empty */
-        <div className="border rounded-xl p-10 text-center">
+        <div className="border border-gray-200 rounded-xl p-10 text-center">
           <h2 className="text-xl font-semibold">No jobs found</h2>
 
           <p className="text-gray-500 mt-2">
@@ -147,118 +136,13 @@ const AdminJobs = () => {
           {/* Jobs */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {jobs.map((job) => (
-              <article
+              <JobCard
                 key={job.jobId}
-                className="border rounded-xl p-5 hover:shadow-md transition"
-              >
-                {/* Header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-xl font-semibold">{job.title}</h2>
-
-                    <p className="text-gray-600 mt-1">{job.company}</p>
-                  </div>
-
-                  <span
-                    className={`text-xs font-medium px-3 py-1 rounded-full capitalize ${getStatusClass(
-                      job.status,
-                    )}`}
-                  >
-                    {job.status}
-                  </span>
-                </div>
-
-                {/* Location */}
-                <p className="text-sm text-gray-500 mt-3">📍 {job.location}</p>
-
-                {/* Description */}
-                <p className="text-sm text-gray-500 mt-4 line-clamp-3">
-                  {job.description}
-                </p>
-
-                {/* Recruiter */}
-                <div className="border-t mt-5 pt-4">
-                  <p className="text-sm text-gray-500">Created By</p>
-
-                  <p className="font-medium mt-1">
-                    {job.createdBy?.name || "N/A"}
-                  </p>
-
-                  <p className="text-sm text-gray-500">
-                    {job.createdBy?.email || ""}
-                  </p>
-                </div>
-
-                {/* Created At */}
-                <p className="text-xs text-gray-400 mt-4">
-                  Created:{" "}
-                  {job.createdAt
-                    ? new Date(job.createdAt).toLocaleDateString()
-                    : "N/A"}
-                </p>
-
-                {/* Actions */}
-                <div className="flex gap-3 mt-5">
-                  {job.status === "active" && (
-                    <>
-                      <button
-                        type="button"
-                        disabled={updatingJobId === job.jobId}
-                        onClick={() => handleStatusUpdate(job.jobId, "closed")}
-                        className="flex-1 bg-yellow-500 text-white px-4 py-2.5 rounded-lg hover:bg-yellow-600 disabled:opacity-50"
-                      >
-                        {updatingJobId === job.jobId ? "Updating..." : "Close"}
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={updatingJobId === job.jobId}
-                        onClick={() => handleStatusUpdate(job.jobId, "deleted")}
-                        className="flex-1 bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-
-                  {job.status === "closed" && (
-                    <>
-                      <button
-                        type="button"
-                        disabled={updatingJobId === job.jobId}
-                        onClick={() => handleStatusUpdate(job.jobId, "active")}
-                        className="flex-1 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 disabled:opacity-50"
-                      >
-                        {updatingJobId === job.jobId ? "Updating..." : "Reopen"}
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={updatingJobId === job.jobId}
-                        onClick={() => handleStatusUpdate(job.jobId, "deleted")}
-                        className="flex-1 bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-
-                 {job.status === "deleted" && (
-  <button
-    type="button"
-    disabled={updatingJobId === job.jobId}
-    onClick={() =>
-      handleStatusUpdate(job.jobId, "active")
-    }
-    className="w-full bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 disabled:opacity-50"
-  >
-    {updatingJobId === job.jobId
-      ? "Restoring..."
-      : "Restore Job"}
-  </button>
-)}
-                </div>
-              </article>
+                job={job}
+                role="admin"
+                updatingJobId={updatingJobId}
+                onStatusChange={handleStatusUpdate}
+              />
             ))}
           </div>
 
@@ -269,7 +153,7 @@ const AdminJobs = () => {
                 type="button"
                 disabled={pagination.page === 1 || loading}
                 onClick={() => fetchJobs(pagination.page - 1)}
-                className="border px-4 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
                 Previous
               </button>
@@ -282,7 +166,7 @@ const AdminJobs = () => {
                 type="button"
                 disabled={pagination.page === pagination.totalPages || loading}
                 onClick={() => fetchJobs(pagination.page + 1)}
-                className="border px-4 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50"
               >
                 Next
               </button>

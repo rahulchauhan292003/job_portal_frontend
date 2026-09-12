@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import Swal from "sweetalert2";
 
+import JobCard from "../../components/JobCard";
+
 import {
   getRecruiterJobs,
   updateRecruiterJobStatus,
@@ -13,6 +15,7 @@ const RecruiterDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [updatingJobId, setUpdatingJobId] = useState(null);
 
+  // Fetch recruiter jobs
   const fetchRecruiterJobs = async () => {
     try {
       setLoading(true);
@@ -34,6 +37,7 @@ const RecruiterDashboard = () => {
     fetchRecruiterJobs();
   }, []);
 
+  // Close / Reopen / Delete
   const handleJobStatus = async (jobId, status) => {
     try {
       setUpdatingJobId(jobId);
@@ -67,6 +71,7 @@ const RecruiterDashboard = () => {
     }
   };
 
+  // Delete confirmation
   const handleDeleteJob = async (jobId) => {
     const result = await Swal.fire({
       title: "Delete this job?",
@@ -85,6 +90,7 @@ const RecruiterDashboard = () => {
     await handleJobStatus(jobId, "deleted");
   };
 
+  // Stats
   const totalApplicants = jobs.reduce(
     (total, job) => total + (job.applicantCount || 0),
     0,
@@ -94,6 +100,7 @@ const RecruiterDashboard = () => {
     (job) => (job.applicantCount || 0) > 0,
   ).length;
 
+  // Loading
   if (loading) {
     return (
       <main className="max-w-7xl mx-auto px-4 py-10">
@@ -118,7 +125,7 @@ const RecruiterDashboard = () => {
 
         <Link
           to="/recruiter/jobs/create"
-          className="bg-black text-white px-5 py-3 rounded-lg hover:bg-gray-800 w-fit"
+          className="bg-gray-900 text-white px-5 py-3 rounded-lg hover:bg-black transition w-fit"
         >
           Create Job
         </Link>
@@ -126,19 +133,19 @@ const RecruiterDashboard = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        <div className="border rounded-xl p-5">
+        <div className="border border-gray-200 rounded-xl p-5 bg-white">
           <p className="text-sm text-gray-500">Total Jobs</p>
 
           <p className="text-3xl font-bold mt-2">{jobs.length}</p>
         </div>
 
-        <div className="border rounded-xl p-5">
+        <div className="border border-gray-200 rounded-xl p-5 bg-white">
           <p className="text-sm text-gray-500">Total Applicants</p>
 
           <p className="text-3xl font-bold mt-2">{totalApplicants}</p>
         </div>
 
-        <div className="border rounded-xl p-5">
+        <div className="border border-gray-200 rounded-xl p-5 bg-white">
           <p className="text-sm text-gray-500">Jobs With Applicants</p>
 
           <p className="text-3xl font-bold mt-2">{jobsWithApplicants}</p>
@@ -152,7 +159,7 @@ const RecruiterDashboard = () => {
 
       {/* Empty State */}
       {jobs.length === 0 ? (
-        <div className="border rounded-xl p-10 text-center">
+        <div className="border border-gray-200 rounded-xl p-10 text-center">
           <h3 className="text-xl font-semibold">No jobs created yet</h3>
 
           <p className="text-gray-500 mt-2">
@@ -161,114 +168,23 @@ const RecruiterDashboard = () => {
 
           <Link
             to="/recruiter/jobs/create"
-            className="inline-block mt-5 bg-black text-white px-5 py-3 rounded-lg"
+            className="inline-block mt-5 bg-gray-900 text-white px-5 py-3 rounded-lg hover:bg-black transition"
           >
             Create Job
           </Link>
         </div>
       ) : (
+        /* Jobs */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {jobs.map((job) => (
-            <article
+            <JobCard
               key={job.jobId}
-              className="border rounded-xl p-5 hover:shadow-md transition"
-            >
-              {/* Job Header */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="text-xl font-semibold truncate">
-                    {job.title}
-                  </h3>
-
-                  <p className="text-gray-600 mt-1">{job.company}</p>
-                </div>
-
-                {/* Status */}
-                <span
-                  className={`shrink-0 text-xs font-medium px-3 py-1 rounded-full ${
-                    job.status === "active"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {job.status === "active" ? "Active" : "Closed"}
-                </span>
-              </div>
-
-              {/* Location */}
-              <p className="text-sm text-gray-500 mt-3">📍 {job.location}</p>
-
-              {/* Description */}
-              <p className="text-sm text-gray-500 mt-4 line-clamp-2">
-                {job.description}
-              </p>
-
-              {/* Applicant Count */}
-              <div className="border-t mt-5 pt-4">
-                <p className="text-sm text-gray-500">Applicants</p>
-
-                <p className="text-2xl font-bold mt-1">
-                  {job.applicantCount || 0}
-                </p>
-              </div>
-
-              {/* Actions */}
-              {/* Actions */}
-              <div className="flex flex-col gap-3 mt-5">
-                {/* View / Edit */}
-                <div className="grid grid-cols-3 gap-2">
-                  <Link
-                    to={`/recruiter/jobs/${job.jobId}/applications`}
-                    className="text-center border border-gray-200 bg-white text-gray-700 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm font-medium"
-                  >
-                    Applications
-                  </Link>
-
-                  <Link
-                    to={`/recruiter/jobs/${job.jobId}`}
-                    className="text-center border border-gray-200 bg-white text-gray-700 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-sm font-medium"
-                  >
-                    View
-                  </Link>
-
-                  <Link
-                    to={`/recruiter/jobs/${job.jobId}/edit`}
-                    className="text-center border border-gray-300 bg-gray-100 text-gray-800 px-3 py-2.5 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
-                  >
-                    Edit
-                  </Link>
-                </div>
-
-                {/* Close / Reopen */}
-                <button
-                  type="button"
-                  disabled={updatingJobId === job.jobId}
-                  onClick={() =>
-                    handleJobStatus(
-                      job.jobId,
-                      job.status === "active" ? "closed" : "active",
-                    )
-                  }
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-800 text-white hover:bg-gray-900 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {updatingJobId === job.jobId
-                    ? "Updating..."
-                    : job.status === "active"
-                      ? "Close Job"
-                      : "Reopen Job"}
-                </button>
-
-                {/* Delete */}
-                <button
-                  type="button"
-                  disabled={updatingJobId === job.jobId}
-                  onClick={() => handleDeleteJob(job.jobId)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-red-200 bg-white text-red-600 hover:bg-red-50 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {updatingJobId === job.jobId ? "Updating..." : "Delete Job"}
-                </button>
-              </div>
-            </article>
+              job={job}
+              role="recruiter"
+              updatingJobId={updatingJobId}
+              onStatusChange={handleJobStatus}
+              onDelete={handleDeleteJob}
+            />
           ))}
         </div>
       )}

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
+import JobCard from "../../components/JobCard";
 import { getJobs } from "../../services/job.api";
+
 import {
   setJobs,
   setJobsLoading,
@@ -24,7 +26,6 @@ const Jobs = () => {
   const [page, setPage] = useState(1);
   const [selectedJobIds, setSelectedJobIds] = useState([]);
 
-  // Prevent duplicate request on initial render
   const isFirstRender = useRef(true);
 
   // Fetch jobs
@@ -42,7 +43,7 @@ const Jobs = () => {
 
       dispatch(
         setJobs({
-          jobs: response.data,
+          jobs: response.data || [],
           pagination: response.pagination,
         }),
       );
@@ -61,7 +62,7 @@ const Jobs = () => {
     fetchJobs(1);
   }, []);
 
-  // search with debounce
+  // Search with debounce
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -138,7 +139,7 @@ const Jobs = () => {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search by job title or company"
-            className="w-full border rounded-lg pl-10 pr-4 py-3 outline-none focus:ring-2"
+            className="w-full border border-gray-200 rounded-lg pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-gray-200"
           />
         </div>
 
@@ -148,13 +149,13 @@ const Jobs = () => {
           value={location}
           onChange={(event) => setLocation(event.target.value)}
           placeholder="Location"
-          className="md:w-56 border rounded-lg px-4 py-3 outline-none focus:ring-2"
+          className="md:w-56 border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-gray-200"
         />
 
         {/* Search Button */}
         <button
           type="submit"
-          className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800"
+          className="bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-black transition"
         >
           Search
         </button>
@@ -162,7 +163,7 @@ const Jobs = () => {
 
       {/* Apply Selected Jobs */}
       {selectedJobIds.length > 0 && (
-        <div className="mb-6 flex items-center justify-between border rounded-lg p-4 bg-gray-50">
+        <div className="mb-6 flex items-center justify-between border border-gray-200 rounded-lg p-4 bg-gray-50">
           <p className="text-sm font-medium">
             {selectedJobIds.length} job
             {selectedJobIds.length > 1 ? "s" : ""} selected
@@ -171,7 +172,7 @@ const Jobs = () => {
           <button
             type="button"
             onClick={handleApplyToAll}
-            className="bg-black text-white px-5 py-2.5 rounded-lg hover:bg-gray-800"
+            className="bg-gray-900 text-white px-5 py-2.5 rounded-lg hover:bg-black transition"
           >
             Apply to Selected Jobs
           </button>
@@ -185,13 +186,13 @@ const Jobs = () => {
 
       {/* Error */}
       {!loading && error && (
-        <div className="border rounded-lg p-5 text-center">
+        <div className="border border-gray-200 rounded-lg p-5 text-center">
           <p className="text-red-500">{error}</p>
 
           <button
             type="button"
             onClick={() => fetchJobs(page)}
-            className="mt-3 border px-4 py-2 rounded-lg hover:bg-gray-50"
+            className="mt-3 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50"
           >
             Try Again
           </button>
@@ -207,75 +208,30 @@ const Jobs = () => {
       {!loading && !error && jobs.length > 0 && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {jobs.map((job) => {
-              const isSelected = selectedJobIds.includes(job.jobId);
-
-              return (
-                <article
-                  key={job.jobId}
-                  className={`border rounded-xl p-5 transition ${
-                    isSelected ? "border-black shadow-md" : "hover:shadow-md"
-                  }`}
-                >
-                  {/* Job Header */}
-                  <div className="flex items-start justify-between gap-3 mb-4">
-                    <div>
-                      <h2 className="text-xl font-semibold">{job.title}</h2>
-
-                      <p className="text-gray-600 mt-1">{job.company}</p>
-                    </div>
-
-                    {/* Select Job */}
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => handleJobSelection(job.jobId)}
-                      className="w-5 h-5 mt-1 cursor-pointer"
-                      aria-label={`Select ${job.title}`}
-                    />
-                  </div>
-
-                  {/* Location */}
-                  <p className="text-sm text-gray-500 mb-3">
-                    📍 {job.location}
-                  </p>
-
-                  {/* Description */}
-                  <p className="text-gray-600 line-clamp-2 mb-5">
-                    {job.description}
-                  </p>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">
-                      {job.questions?.length || 0} questions
-                    </span>
-
-                    <Link
-                      to={`/jobs/${job.jobId}`}
-                      className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
-                    >
-                      View Job
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
+            {jobs.map((job) => (
+              <JobCard
+                key={job.jobId}
+                job={job}
+                role="user"
+                selected={selectedJobIds.includes(job.jobId)}
+                onSelect={handleJobSelection}
+              />
+            ))}
           </div>
 
           {/* Pagination */}
-          {pagination.totalPages > 0 && (
+          {pagination?.totalPages > 0 && (
             <div className="flex justify-center items-center gap-4 mt-8">
               <button
                 type="button"
                 disabled={pagination.page <= 1}
                 onClick={() => setPage((prev) => prev - 1)}
-                className="border px-4 py-2 rounded-lg disabled:opacity-40"
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
 
-              <span>
+              <span className="text-sm text-gray-600">
                 Page {pagination.page} of {pagination.totalPages || 1}
               </span>
 
@@ -283,7 +239,7 @@ const Jobs = () => {
                 type="button"
                 disabled={pagination.page >= pagination.totalPages}
                 onClick={() => setPage((prev) => prev + 1)}
-                className="border px-4 py-2 rounded-lg disabled:opacity-40"
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Next
               </button>
