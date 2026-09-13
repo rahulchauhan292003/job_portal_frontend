@@ -31,14 +31,22 @@ const JobCard = ({
           <p className="text-gray-600 mt-1">{job.company}</p>
         </div>
 
-        {/* User Selection */}
+        {/* User Selection / Applied Status */}
         {isUser && (
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={() => onSelect?.(job.jobId)}
-            className="w-5 h-5 mt-1 cursor-pointer"
-          />
+          <div className="shrink-0">
+            {job.applied ? (
+              <span className="inline-flex items-center gap-1 text-sm font-medium text-green-600">
+                ✓ Applied
+              </span>
+            ) : (
+              <input
+                type="checkbox"
+                checked={selected}
+                onChange={() => onSelect?.(job.jobId)}
+                className="h-5 w-5 cursor-pointer"
+              />
+            )}
+          </div>
         )}
 
         {/* Status */}
@@ -58,7 +66,7 @@ const JobCard = ({
       {/* Location */}
       <p className="text-sm text-gray-500 mt-4">📍 {job.location}</p>
 
-      {/* Description - Always 2 lines */}
+      {/* Description */}
       <p className="text-sm text-gray-600 mt-4 line-clamp-2 h-10 leading-5">
         {job.description}
       </p>
@@ -78,7 +86,8 @@ const JobCard = ({
       {isUser && (
         <div className="flex items-center justify-between mt-5">
           <p className="text-sm text-gray-500">
-            {job.questions?.length || 0} questions
+            {job.questions?.length || 0}{" "}
+            {job.questions?.length === 1 ? "question" : "questions"}
           </p>
 
           <Link
@@ -170,7 +179,7 @@ const JobCard = ({
             </p>
           </div>
 
-          {/* Actions */}
+          {/* Active */}
           {job.status === "active" && (
             <>
               <button
@@ -193,6 +202,7 @@ const JobCard = ({
             </>
           )}
 
+          {/* Closed */}
           {job.status === "closed" && (
             <>
               <button
@@ -215,6 +225,7 @@ const JobCard = ({
             </>
           )}
 
+          {/* Deleted */}
           {job.status === "deleted" && (
             <button
               type="button"

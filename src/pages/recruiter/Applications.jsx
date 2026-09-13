@@ -182,36 +182,36 @@ const Applications = () => {
                   </h3>
 
                   <div className="space-y-3">
-                    {application.answers.map(
-                      (answer) => (
-                        <div
-                          key={answer.questionId}
-                          className="bg-gray-50 rounded-lg p-3"
-                        >
-                          <p className="text-xs text-gray-500">
-                            Question ID
-                          </p>
+{application.answers?.map((item) => {
+  const question = application.job?.questions?.find(
+    (q) => q.questionId === item.questionId
+  );
 
-                          <p className="text-sm mt-1 break-all">
-                            {answer.questionId}
-                          </p>
+  return (
+    <div
+      key={item.questionId}
+      className="bg-gray-50 rounded-xl p-5"
+    >
+      <p className="text-sm text-gray-500">
+        Question
+      </p>
 
-                          <p className="text-xs text-gray-500 mt-3">
-                            Answer
-                          </p>
+      <p className="font-medium mt-1">
+        {question?.label || "Question unavailable"}
+      </p>
 
-                          <p className="text-sm font-medium mt-1">
-                            {Array.isArray(
-                              answer.answer
-                            )
-                              ? answer.answer.join(", ")
-                              : String(
-                                  answer.answer
-                                )}
-                          </p>
-                        </div>
-                      )
-                    )}
+      <p className="text-sm text-gray-500 mt-4">
+        Answer
+      </p>
+
+      <p className="font-medium mt-1">
+        {Array.isArray(item.answer)
+          ? item.answer.join(", ")
+          : String(item.answer ?? "—")}
+      </p>
+    </div>
+  );
+})}
                   </div>
                 </div>
               )}

@@ -72,15 +72,34 @@ const ApplyToAll = () => {
           .filter((item) => item.answer !== undefined && item.answer !== "");
       });
 
-      const response = await applyToAllJobs(jobIds, answersByJob);
+const response = await applyToAllJobs(jobIds, answersByJob);
 
-      setResult(response.data);
+setResult(response.data);
 
-      if (response.data.failed?.length === 0) {
-        toast.success("Applications submitted successfully");
-      } else {
-        toast.success("Applications processed");
-      }
+const submitted = response.data?.submitted || [];
+const failed = response.data?.failed || [];
+
+if (submitted.length > 0 && failed.length === 0) {
+  toast.success(
+    submitted.length === 1
+      ? "Application submitted successfully"
+      : `${submitted.length} applications submitted successfully`,
+  );
+} else if (submitted.length > 0 && failed.length > 0) {
+  toast.success(
+    submitted.length === 1
+      ? "1 application submitted"
+      : `${submitted.length} applications submitted`,
+  );
+
+  toast.error(
+    failed.length === 1
+      ? "1 application failed"
+      : `${failed.length} applications failed`,
+  );
+} else if (submitted.length === 0 && failed.length > 0) {
+  toast.error("No new applications were submitted");
+}
     } catch (error) {
       const message =
         error.response?.data?.message || "Failed to submit applications";

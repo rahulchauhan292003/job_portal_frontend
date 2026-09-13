@@ -34,8 +34,11 @@ const JobDetails = () => {
     register,
     control,
     handleSubmit,
+    reset,
     formState: { errors },
-  } = useForm();
+  } = useForm({
+    shouldUnregister: true,
+  });
 
   // Fetch job details
   useEffect(() => {
@@ -49,6 +52,10 @@ const JobDetails = () => {
         const response = await getJobById(jobId);
 
         dispatch(setSelectedJob(response.data));
+
+        reset({
+          answers: {},
+        });
 
         // Check application status only for normal users
         if (user?.role === "user") {
@@ -76,7 +83,7 @@ const JobDetails = () => {
     };
 
     fetchJob();
-  }, [jobId, dispatch, user?.role]);
+  }, [jobId, dispatch, user?.role,reset]);
 
   // Submit application
   const onSubmit = async (formData) => {
@@ -238,7 +245,7 @@ const JobDetails = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form key={jobId} onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-6">
               {selectedJob.questions?.map((question) => (
                 <div key={question.questionId}>
